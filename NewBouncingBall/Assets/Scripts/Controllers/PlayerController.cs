@@ -7,7 +7,7 @@ public class PlayerController2D : MonoBehaviour
     public float jumpForce = 6f;
 
     [Header("Hold Jump (subtle)")]
-    public float holdBoost = 0.4f;
+    public float holdBoost = 15f;   // FIX: raised because it's now multiplied by deltaTime
     public float holdTime = 0.12f;
 
     [Header("Flip In Air")]
@@ -29,6 +29,10 @@ public class PlayerController2D : MonoBehaviour
     float holdCounter;
 
     bool isFlipping;
+
+    // FIX: track a coyote-time-safe jump lock so ground check doesn't
+    //      immediately re-enable jumping the frame we leave the ground
+    float jumpCooldown;
 
     public Animator anim;
 
@@ -52,8 +56,13 @@ public class PlayerController2D : MonoBehaviour
 
     void Update()
     {
-        // Ground check
-        if (groundCheck != null)
+        // FIX: tick down the jump cooldown before running ground check,
+        //      so we don't re-detect ground the same frame we jumped
+        if (jumpCooldown > 0f)
+            jumpCooldown -= Time.deltaTime;
+
+        // Ground check (blocked for a short window after jumping)
+        if (groundCheck != null && jumpCooldown <= 0f)
             isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundRadius, groundLayer);
 
         // Move input
@@ -74,17 +83,19 @@ public class PlayerController2D : MonoBehaviour
         {
             rb.linearVelocity = new Vector2(x * moveSpeed, jumpForce);
 
-            holdingJump = true;
-            holdCounter = holdTime;
+            holdingJump  = true;
+            holdCounter  = holdTime;
+            isFlipping   = true;
+            isGrounded   = false;
 
-            isFlipping = true;
-            isGrounded = false;
+            jumpCooldown = 0.1f; // FIX: block ground re-detection for 100 ms
         }
 
-        // Hold boost
+        // Hold boost — FIX: multiply by Time.deltaTime so it's frame-rate independent
         if (jumpHeld && holdingJump && holdCounter > 0f)
         {
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y + holdBoost);
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x,
+                                            rb.linearVelocity.y + holdBoost * Time.deltaTime);
             holdCounter -= Time.deltaTime;
         }
 
@@ -108,4 +119,4 @@ public class PlayerController2D : MonoBehaviour
         if (groundCheck != null)
             Gizmos.DrawWireSphere(groundCheck.position, groundRadius);
     }
-} 
+}
