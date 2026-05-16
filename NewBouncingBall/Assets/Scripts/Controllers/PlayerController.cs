@@ -7,7 +7,7 @@ public class PlayerController2D : MonoBehaviour
     public float jumpForce = 6f;
 
     [Header("Hold Jump (subtle)")]
-    public float holdBoost = 15f;   // FIX: raised because it's now multiplied by deltaTime
+    public float holdBoost = 15f;   
     public float holdTime = 0.12f;
 
     [Header("Flip In Air")]
@@ -30,8 +30,6 @@ public class PlayerController2D : MonoBehaviour
 
     bool isFlipping;
 
-    // FIX: track a coyote-time-safe jump lock so ground check doesn't
-    //      immediately re-enable jumping the frame we leave the ground
     float jumpCooldown;
 
     public Animator anim;
@@ -56,12 +54,10 @@ public class PlayerController2D : MonoBehaviour
 
     void Update()
     {
-        // FIX: tick down the jump cooldown before running ground check,
-        //      so we don't re-detect ground the same frame we jumped
         if (jumpCooldown > 0f)
             jumpCooldown -= Time.deltaTime;
 
-        // Ground check (blocked for a short window after jumping)
+        // Ground check 
         if (groundCheck != null && jumpCooldown <= 0f)
             isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundRadius, groundLayer);
 
@@ -88,10 +84,10 @@ public class PlayerController2D : MonoBehaviour
             isFlipping   = true;
             isGrounded   = false;
 
-            jumpCooldown = 0.1f; // FIX: block ground re-detection for 100 ms
+            jumpCooldown = 0.1f; 
         }
 
-        // Hold boost — FIX: multiply by Time.deltaTime so it's frame-rate independent
+        // Hold boost 
         if (jumpHeld && holdingJump && holdCounter > 0f)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x,

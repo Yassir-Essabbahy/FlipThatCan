@@ -52,7 +52,7 @@ public class EndFlag : MonoBehaviour
 
         yield return new WaitForSeconds(3f);
 
-        // Back to menu (or reload)
-        SceneManager.LoadScene(0);
+        // Back to menu
+        SceneManager.LoadScene("MainMenu");
     }
 }
